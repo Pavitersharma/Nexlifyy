@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useCounter } from '../hooks/useEffects'
 
 function StatCounter({ target, label }) {
@@ -16,13 +16,16 @@ function StatCounter({ target, label }) {
 }
 
 export default function Hero() {
+  // Parallax scroll with RAF throttling
   useEffect(() => {
-    const onScroll = () => {
+    let ticking = false
+
+    const update = () => {
       const hero = document.getElementById('hero')
       const y = window.scrollY
-      if (y < window.innerHeight) {
-        const title = hero?.querySelector('.hero-title')
-        const sub = hero?.querySelector('.hero-sub')
+      if (y < window.innerHeight && hero) {
+        const title = hero.querySelector('.hero-title')
+        const sub = hero.querySelector('.hero-sub')
         if (title) {
           title.style.transform = `translateY(${y * 0.3}px)`
           title.style.opacity = String(1 - y / 400)
@@ -32,8 +35,17 @@ export default function Hero() {
           sub.style.opacity = String(1 - y / 350)
         }
       }
+      ticking = false
     }
-    window.addEventListener('scroll', onScroll)
+
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(update)
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
@@ -128,7 +140,7 @@ export default function Hero() {
       </div>
 
       {/* Scroll indicator */}
-      <div className="hero-scroll-anim absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+      <div className="hero-scroll-anim absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2" aria-hidden="true">
         <span className="text-text3 uppercase tracking-[0.3em]" style={{ fontSize: '0.65rem' }}>Scroll</span>
         <div className="scroll-line" />
       </div>

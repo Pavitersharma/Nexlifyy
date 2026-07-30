@@ -15,16 +15,75 @@ const inputStyle = {
   appearance: 'none',
 }
 
+const inputErrorStyle = {
+  ...inputStyle,
+  borderColor: '#e74c3c',
+}
+
+function validateEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
   const [form, setForm] = useState({ fname: '', lname: '', email: '', company: '', service: '', message: '' })
+  const [errors, setErrors] = useState({})
 
-  const handleSubmit = () => {
-    setSubmitted(true)
-    setTimeout(() => setSubmitted(false), 3000)
+  const validate = () => {
+    const e = {}
+    if (!form.fname.trim()) e.fname = 'First name is required'
+    if (!form.email.trim()) e.email = 'Email is required'
+    else if (!validateEmail(form.email)) e.email = 'Enter a valid email'
+    if (!form.message.trim()) e.message = 'Please describe your project'
+    return e
   }
 
-  const change = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+  const handleSubmit = async () => {
+    const validationErrors = validate()
+    setErrors(validationErrors)
+    setSubmitError('')
+    if (Object.keys(validationErrors).length > 0) return
+
+    setSubmitting(true)
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_key: '1d96aa0a-940c-4a9b-ae0a-5d8100b686da',
+          subject: `New Enquiry from ${form.fname} ${form.lname}`.trim(),
+          from_name: 'Nexlifyy Website',
+          name: `${form.fname} ${form.lname}`.trim(),
+          email: form.email,
+          company: form.company || 'Not provided',
+          service: form.service || 'Not specified',
+          message: form.message,
+        }),
+      })
+      const data = await response.json()
+      if (data.success) {
+        setSubmitted(true)
+        setForm({ fname: '', lname: '', email: '', company: '', service: '', message: '' })
+        setTimeout(() => setSubmitted(false), 3000)
+      } else {
+        setSubmitError('Something went wrong. Please try again.')
+      }
+    } catch {
+      setSubmitError('Network error. Please check your connection and try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const change = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value })
+    // Clear error on change
+    if (errors[e.target.name]) {
+      setErrors({ ...errors, [e.target.name]: undefined })
+    }
+  }
 
   return (
     <section id="contact" style={{ background: 'var(--black)', padding: '8rem 4%', position: 'relative', overflow: 'hidden' }}>
@@ -74,10 +133,12 @@ export default function Contact() {
 
         {/* Form */}
         <div className="reveal-right flex flex-col gap-6">
-          <div className="grid gap-6" style={{ gridTemplateColumns: '1fr 1fr' }}>
+          <div className="contact-name-grid gap-6">
             <div className="form-group relative">
-              <input name="fname" value={form.fname} onChange={change} placeholder="First Name" style={inputStyle} />
+              <input name="fname" value={form.fname} onChange={change} placeholder="First Name"
+                style={errors.fname ? inputErrorStyle : inputStyle} aria-required="true" />
               <label className="absolute top-[1.1rem] left-[1.2rem] text-text3 pointer-events-none transition-all duration-300" style={{ fontSize: '0.85rem' }}>First Name</label>
+              {errors.fname && <span className="text-[#e74c3c] mt-1 block" style={{ fontSize: '0.72rem' }}>{errors.fname}</span>}
             </div>
             <div className="form-group relative">
               <input name="lname" value={form.lname} onChange={change} placeholder="Last Name" style={inputStyle} />
@@ -86,8 +147,10 @@ export default function Contact() {
           </div>
 
           <div className="form-group relative">
-            <input type="email" name="email" value={form.email} onChange={change} placeholder="Email Address" style={inputStyle} />
+            <input type="email" name="email" value={form.email} onChange={change} placeholder="Email Address"
+              style={errors.email ? inputErrorStyle : inputStyle} aria-required="true" />
             <label className="absolute top-[1.1rem] left-[1.2rem] text-text3 pointer-events-none transition-all duration-300" style={{ fontSize: '0.85rem' }}>Email Address</label>
+            {errors.email && <span className="text-[#e74c3c] mt-1 block" style={{ fontSize: '0.72rem' }}>{errors.email}</span>}
           </div>
 
           <div className="form-group relative">
@@ -107,26 +170,42 @@ export default function Contact() {
           </div>
 
           <div className="form-group relative">
-            <textarea name="message" value={form.message} onChange={change} rows="4" placeholder="Tell us about your project" style={inputStyle} />
+            <textarea name="message" value={form.message} onChange={change} rows="4" placeholder="Tell us about your project"
+              style={errors.message ? inputErrorStyle : inputStyle} aria-required="true" />
             <label className="absolute top-[1.1rem] left-[1.2rem] text-text3 pointer-events-none transition-all duration-300" style={{ fontSize: '0.85rem' }}>Project Details</label>
+            {errors.message && <span className="text-[#e74c3c] mt-1 block" style={{ fontSize: '0.72rem' }}>{errors.message}</span>}
           </div>
+
+          {submitError && (
+            <div className="text-[#e74c3c]" style={{ fontSize: '0.82rem', padding: '0.8rem 1rem', background: 'rgba(231,76,60,0.08)', border: '1px solid rgba(231,76,60,0.2)' }}>
+              {submitError}
+            </div>
+          )}
 
           <button
             onClick={handleSubmit}
+            disabled={submitting || submitted}
             className="relative overflow-hidden group self-start transition-all duration-500"
             style={{
-              background: 'var(--gold)', color: 'var(--black)',
+              background: submitted ? '#2ecc71' : (submitting ? 'var(--text3)' : 'var(--gold)'),
+              color: 'var(--black)',
               border: 'none', padding: '1.1rem 3rem',
               fontFamily: 'var(--font-body)', fontSize: '0.8rem',
               letterSpacing: '0.2em', textTransform: 'uppercase',
-              cursor: 'pointer', fontWeight: 500,
+              cursor: submitting || submitted ? 'default' : 'pointer',
+              fontWeight: 500,
+              opacity: submitting ? 0.7 : 1,
             }}
           >
-            <span className="relative z-[1]">{submitted ? 'Message Sent! ✦' : 'Send Message ✦'}</span>
-            <span
-              className="absolute inset-0 translate-x-[-101%] group-hover:translate-x-0 transition-transform duration-500"
-              style={{ background: 'var(--white2)' }}
-            />
+            <span className="relative z-[1]">
+              {submitted ? 'Message Sent! ✦' : submitting ? 'Sending...' : 'Send Message ✦'}
+            </span>
+            {!submitting && !submitted && (
+              <span
+                className="absolute inset-0 translate-x-[-101%] group-hover:translate-x-0 transition-transform duration-500"
+                style={{ background: 'var(--white2)' }}
+              />
+            )}
           </button>
         </div>
       </div>

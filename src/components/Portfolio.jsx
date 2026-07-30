@@ -1,32 +1,55 @@
 import { portfolio } from '../data/content'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 
 function PortfolioItem({ item }) {
   const iframeRef = useRef(null)
 
-  useEffect(() => {
-    // Responsive iframe scale calculation
-    const setScale = () => {
-      if (!iframeRef.current) return
-      const wrap = iframeRef.current.parentElement
-      const w = wrap.offsetWidth
-      const scale = w / 1440
-      iframeRef.current.style.transform = `scale(${scale})`
-    }
-    setScale()
-    window.addEventListener('resize', setScale)
-    return () => window.removeEventListener('resize', setScale)
+  const setScale = useCallback(() => {
+    if (!iframeRef.current) return
+    const wrap = iframeRef.current.parentElement
+    const w = wrap.offsetWidth
+    const scale = w / 1440
+    iframeRef.current.style.transform = `scale(${scale})`
   }, [])
+
+  useEffect(() => {
+    setScale()
+
+    // Use ResizeObserver for efficient resize tracking
+    const wrap = iframeRef.current?.parentElement
+    if (!wrap) return
+
+    let resizeObserver
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => setScale())
+      resizeObserver.observe(wrap)
+    } else {
+      // Fallback with debounced resize listener
+      let timeout
+      const onResize = () => {
+        clearTimeout(timeout)
+        timeout = setTimeout(setScale, 150)
+      }
+      window.addEventListener('resize', onResize)
+      return () => {
+        clearTimeout(timeout)
+        window.removeEventListener('resize', onResize)
+      }
+    }
+
+    return () => {
+      if (resizeObserver) resizeObserver.disconnect()
+    }
+  }, [setScale])
 
   return (
     <a
       href={item.url}
       target="_blank"
       rel="noopener noreferrer"
-      className={`reveal group relative overflow-hidden block`}
+      className="reveal group relative overflow-hidden block portfolio-item"
       style={{
         background: 'var(--black)',
-        gridColumn: item.large ? 'span 2' : 'span 1',
         textDecoration: 'none',
       }}
     >
@@ -115,16 +138,7 @@ export default function Portfolio() {
         </p>
       </div>
 
-      <div
-        className="mx-auto"
-        style={{
-          maxWidth: 1200,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: 1,
-          background: 'rgba(255,255,255,0.04)',
-        }}
-      >
+      <div className="portfolio-grid mx-auto" style={{ maxWidth: 1200 }}>
         {portfolio.map((item) => (
           <PortfolioItem key={item.id} item={item} />
         ))}

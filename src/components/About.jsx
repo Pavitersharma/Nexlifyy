@@ -21,7 +21,7 @@ export default function About() {
       <div className="grid gap-24 items-center mx-auto" style={{ maxWidth: 1200, gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
 
         {/* Visual */}
-        <div className="reveal-left relative" style={{ height: 500 }}>
+        <div className="reveal-left relative about-visual-wrapper" style={{ minHeight: 400 }}>
           <div
             className="absolute inset-0 overflow-hidden"
             style={{
@@ -52,15 +52,8 @@ export default function About() {
             </div>
           </div>
 
-          {/* Counter grid */}
-          <div
-            className="absolute grid"
-            style={{
-              bottom: '-2rem', right: '-2rem',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 1, background: 'rgba(201,168,76,0.1)',
-            }}
-          >
+          {/* Counter grid — responsive positioning via CSS */}
+          <div className="about-counter-grid">
             <Counter target={150} label="Projects" />
             <Counter target={98} label="Clients" />
             <Counter target={7} label="Years" />

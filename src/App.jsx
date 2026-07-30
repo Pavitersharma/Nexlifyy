@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Loader from './components/Loader'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
@@ -22,23 +22,6 @@ function App() {
   useCursor()
   useScrollEffects()
   useMagneticButtons()
-
-  useEffect(() => {
-    if (loaded) {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((e) => {
-            if (e.isIntersecting) {
-              e.target.classList.add('visible')
-              observer.unobserve(e.target)
-            }
-          })
-        },
-        { threshold: 0.1, rootMargin: '0px 0px -60px 0px' }
-      )
-      document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach((el) => observer.observe(el))
-    }
-  }, [loaded])
 
   return (
     <>

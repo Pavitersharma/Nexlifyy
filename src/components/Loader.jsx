@@ -2,12 +2,25 @@ import { useEffect, useState } from 'react'
 
 export default function Loader({ onDone }) {
   const [fading, setFading] = useState(false)
+  const [skip, setSkip] = useState(false)
 
   useEffect(() => {
+    // Skip loader on repeat visits within the same session
+    if (sessionStorage.getItem('nexlifyy-loaded')) {
+      setSkip(true)
+      onDone()
+      return
+    }
+
     const t1 = setTimeout(() => setFading(true), 2000)
-    const t2 = setTimeout(() => onDone(), 2800)
+    const t2 = setTimeout(() => {
+      sessionStorage.setItem('nexlifyy-loaded', '1')
+      onDone()
+    }, 2800)
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [onDone])
+
+  if (skip) return null
 
   return (
     <div

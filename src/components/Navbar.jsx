@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const navLinks = [
   { href: '#about', label: 'About' },
@@ -11,6 +11,46 @@ const navLinks = [
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [activeSection, setActiveSection] = useState('')
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [menuOpen])
+
+  // Close on Escape key
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape' && menuOpen) setMenuOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [menuOpen])
+
+  // Track active section for nav highlighting
+  useEffect(() => {
+    const sectionIds = navLinks.map((l) => l.href.replace('#', ''))
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection('#' + entry.target.id)
+          }
+        })
+      },
+      { threshold: 0.3, rootMargin: '-80px 0px -50% 0px' }
+    )
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id)
+      if (el) observer.observe(el)
+    })
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <>
@@ -18,6 +58,15 @@ export default function Navbar() {
       {menuOpen && (
         <div className="fixed inset-0 z-[850] flex flex-col items-center justify-center gap-8"
           style={{ background: 'rgba(8,8,8,0.97)', backdropFilter: 'blur(30px)' }}>
+          {/* Close button */}
+          <button
+            className="absolute top-6 right-6 text-cream hover:text-gold transition-colors duration-300 bg-transparent border-0 cursor-pointer"
+            style={{ fontSize: '2rem', lineHeight: 1 }}
+            onClick={() => setMenuOpen(false)}
+            aria-label="Close menu"
+          >
+            ✕
+          </button>
           {navLinks.map((l) => (
             <a
               key={l.href}
@@ -47,11 +96,15 @@ export default function Navbar() {
             <li key={l.href}>
               <a
                 href={l.href}
-                className="text-text2 no-underline uppercase tracking-widest font-normal hover:text-cream transition-colors duration-300 relative group"
+                className={`no-underline uppercase tracking-widest font-normal transition-colors duration-300 relative group ${
+                  activeSection === l.href ? 'text-cream' : 'text-text2 hover:text-cream'
+                }`}
                 style={{ fontSize: '0.78rem', letterSpacing: '0.12em' }}
               >
                 {l.label}
-                <span className="absolute bottom-[-4px] left-0 w-0 h-px bg-gold transition-all duration-300 group-hover:w-full" />
+                <span className={`absolute bottom-[-4px] left-0 h-px bg-gold transition-all duration-300 ${
+                  activeSection === l.href ? 'w-full' : 'w-0 group-hover:w-full'
+                }`} />
               </a>
             </li>
           ))}
@@ -76,22 +129,13 @@ export default function Navbar() {
           className="flex md:hidden flex-col gap-[5px] cursor-pointer p-2 bg-transparent border-0"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle menu"
+          aria-expanded={menuOpen}
         >
           <span className="block w-6 h-px bg-cream" />
           <span className="block w-6 h-px bg-cream" />
           <span className="block w-6 h-px bg-cream" />
         </button>
       </nav>
-
-      <style>{`
-        nav#navbar.scrolled {
-          background: rgba(8,8,8,0.85);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          padding: 1rem 4% !important;
-          border-bottom: 1px solid rgba(201,168,76,0.08);
-        }
-      `}</style>
     </>
   )
 }

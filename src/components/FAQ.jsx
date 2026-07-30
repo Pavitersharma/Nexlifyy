@@ -21,6 +21,8 @@ export default function FAQ() {
 
         {faqs.map((faq, i) => {
           const isOpen = openIndex === i
+          const panelId = `faq-panel-${i}`
+          const buttonId = `faq-button-${i}`
           return (
             <div
               key={i}
@@ -28,9 +30,12 @@ export default function FAQ() {
               style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
             >
               <button
+                id={buttonId}
                 className="w-full flex items-center justify-between text-left gap-4 transition-colors duration-300 hover:text-gold bg-transparent border-0"
                 style={{ padding: '1.75rem 0', color: isOpen ? 'var(--gold)' : 'var(--white)', fontSize: '1rem', fontWeight: 400, cursor: 'pointer', fontFamily: 'var(--font-body)' }}
                 onClick={() => toggle(i)}
+                aria-expanded={isOpen}
+                aria-controls={panelId}
               >
                 {faq.q}
                 <span
@@ -43,11 +48,15 @@ export default function FAQ() {
                     transform: isOpen ? 'rotate(45deg)' : 'none',
                     fontSize: '1.2rem', lineHeight: 1,
                   }}
+                  aria-hidden="true"
                 >
                   +
                 </span>
               </button>
               <div
+                id={panelId}
+                role="region"
+                aria-labelledby={buttonId}
                 className="faq-answer"
                 style={{ maxHeight: isOpen ? 300 : 0 }}
               >

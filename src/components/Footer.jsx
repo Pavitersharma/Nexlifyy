@@ -104,7 +104,7 @@ export default function Footer() {
         className="flex justify-between items-center flex-wrap gap-4 px-[4%] mx-auto py-6"
         style={{ maxWidth: 1200, borderTop: '1px solid rgba(255,255,255,0.05)' }}
       >
-        <p className="text-text3 tracking-wide" style={{ fontSize: '0.75rem' }}>© 2024 Nexlifyy Digital. All rights reserved.</p>
+        <p className="text-text3 tracking-wide" style={{ fontSize: '0.75rem' }}>© {new Date().getFullYear()} Nexlifyy Digital. All rights reserved.</p>
         <div className="flex gap-8">
           {['Privacy Policy', 'Terms of Service', 'Sitemap'].map((l) => (
             <a key={l} href="#" className="text-text3 hover:text-gold no-underline transition-colors duration-300" style={{ fontSize: '0.72rem', letterSpacing: '0.05em' }}>
